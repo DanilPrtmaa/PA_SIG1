@@ -1,0 +1,1733 @@
+<!doctype html>
+<html lang="id">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        
+        <!-- Gunakan path absolut untuk resources atau CDN -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@7.3.0/ol.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="./resources/ol-layerswitcher.css">
+        <link rel="stylesheet" href="./resources/qgis2web.css">
+        
+        <style>
+        html, body {
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .ol-control > * {
+            background-color: #f8f8f8!important;
+            color: #444444!important;
+            border-radius: 0px;
+        }
+        .ol-attribution a, .gcd-gl-input::placeholder, .search-layer-input-search::placeholder {
+            color: #444444!important;
+        }
+        .search-layer-input-search {
+            background-color: #f8f8f8!important;
+        }
+        .ol-control > *:focus, .ol-control >*:hover {
+            background-color: rgba(248, 248, 248, 0.7)!important;
+        } 
+        .ol-control {
+            background-color: rgba(255,255,255,.4) !important;
+            padding: 2px !important;
+        } 
+        </style>
+
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        </style>
+        
+        <!-- ======== STYLE DASHBOARD ======== -->
+        <style>
+            :root {
+                --rs-pct: 40;
+                --kl-pct: 35;
+                --pk-pct: 25;
+                --primary: #2e7d32;
+                --secondary: #6c757d;
+                --success: #43a047;
+                --danger: #d32f2f;
+                --warning: #ffa000;
+                --info: #1976d2;
+                --light: #f8f9fa;
+                --dark: #343a40;
+                --hospital: #d32f2f;
+                --clinic: #1976d2;
+                --health-center: #388e3c;
+                --yogya-blue: #1a237e;
+                --yogya-green: #2e7d32;
+            }
+
+            /* Header Dashboard */
+            #dashboard-header {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 60px;
+                background: #ffffff;
+                backdrop-filter: blur(10px);
+                border-bottom: 1px solid #e0e0e0;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 20px;
+                z-index: 1000;
+                box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            }
+
+            .header-left {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .header-right {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .dashboard-title {
+                font-size: 22px;
+                font-weight: 700;
+                color: var(--yogya-blue);
+                margin: 0;
+            }
+
+            .dashboard-subtitle {
+                font-size: 14px;
+                color: #666;
+                margin: 0;
+            }
+
+            .btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 10px 18px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                border: none;
+                transition: all 0.2s ease;
+                text-decoration: none;
+            }
+
+            .btn-primary {
+                background: var(--yogya-blue);
+                color: white;
+                box-shadow: 0 2px 8px rgba(26, 35, 126, 0.3);
+            }
+
+            .btn-outline {
+                background: transparent;
+                color: var(--yogya-blue);
+                border: 2px solid var(--yogya-blue);
+            }
+
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+
+            .btn-primary:hover {
+                background: #151f7a;
+            }
+
+            .btn-outline:hover {
+                background: rgba(26, 35, 126, 0.1);
+            }
+
+            /* Main Dashboard Content */
+            #dashboard-content {
+                position: absolute;
+                top: 60px;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                display: flex;
+                z-index: 999;
+                background: #ffffff;
+            }
+
+            /* Sidebar - Full Dashboard */
+            #dashboard-sidebar {
+                width: 100%;
+                height: 100%;
+                padding: 25px;
+                overflow-y: auto;
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+                align-content: start;
+            }
+
+            /* Cards */
+            .cards {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+                margin: 10px 0;
+            }
+            .card {
+                border: 1px solid #e0e0e0;
+                border-radius: 12px;
+                padding: 15px;
+                text-align: center;
+                background: #ffffff;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                color: #333;
+                transition: all 0.3s ease;
+            }
+            .card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+                background: #f9f9f9;
+            }
+            .card .num {
+                font-size: 24px;
+                font-weight: 800;
+                line-height: 1.1;
+                color: var(--yogya-blue);
+                margin-bottom: 5px;
+            }
+            .card .lbl {
+                font-size: 12px;
+                color: #666;
+                font-weight: 500;
+            }
+            .cards.wide {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            /* Bars */
+            .bars {
+                border: 1px solid #e0e0e0;
+                border-radius: 12px;
+                padding: 15px;
+                background: #ffffff;
+                margin-bottom: 15px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            }
+            .bar {
+                display: grid;
+                grid-template-columns: 50px 1fr 40px;
+                align-items: center;
+                gap: 10px;
+                margin: 8px 0;
+            }
+            .bar .tag {
+                font-size: 13px;
+                color: #333;
+                font-weight: 600;
+            }
+            .bar .track {
+                position: relative;
+                height: 12px;
+                border-radius: 10px;
+                background: #f0f0f0;
+                overflow: hidden;
+                box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+            }
+            .bar .fill {
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: var(--pct, 0%);
+                background: var(--clr, #888);
+                border-radius: 10px;
+                transition: width 0.8s ease;
+            }
+            .bar .val {
+                font-size: 13px;
+                text-align: right;
+                color: #333;
+                font-weight: 600;
+            }
+
+            /* Section Headers */
+            .section-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin: 15px 0 12px;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #e0e0e0;
+            }
+            .section-title {
+                font-size: 18px;
+                font-weight: 700;
+                color: var(--yogya-blue);
+                margin: 0;
+            }
+
+            /* Layer checklist */
+            .layer-list {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .layer-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px;
+                border: 1px solid #e0e0e0;
+                border-radius: 10px;
+                background: #ffffff;
+                transition: all 0.3s ease;
+            }
+            .layer-item:hover {
+                background: #f5f5f5;
+                transform: translateX(3px);
+            }
+            .chk {
+                appearance: none;
+                width: 20px;
+                height: 20px;
+                border: 2px solid #ccc;
+                border-radius: 5px;
+                position: relative;
+                background: #ffffff;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            .chk:checked {
+                background: var(--yogya-blue);
+                border-color: var(--yogya-blue);
+            }
+            .chk:checked::after {
+                content: '';
+                position: absolute;
+                left: 5px;
+                top: 1px;
+                width: 6px;
+                height: 12px;
+                border: 2px solid #fff;
+                border-left: 0;
+                border-top: 0;
+                transform: rotate(45deg);
+            }
+            .layer-name {
+                font-size: 14px;
+                color: #333;
+                flex: 1;
+                font-weight: 500;
+            }
+
+            /* Legend */
+            .legend {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-top: 15px;
+            }
+            .legend .item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin: 5px 0;
+            }
+            .swatch {
+                width: 18px;
+                height: 18px;
+                border-radius: 4px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                background: #ddd;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .legend .item span:last-child {
+                color: #333;
+                font-size: 13px;
+                font-weight: 500;
+            }
+
+            /* Charts - Improved Bar Chart */
+            .chart-container {
+                background: #ffffff;
+                border: 1px solid #e0e0e0;
+                border-radius: 12px;
+                padding: 18px;
+                margin-top: 15px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                overflow: visible; /* Memastikan label tidak terpotong */
+            }
+            .chart-title {
+                font-size: 15px;
+                font-weight: 700;
+                margin: 0 0 15px;
+                color: var(--yogya-blue);
+                text-align: center;
+            }
+            .chart {
+                width: 100%;
+                height: 240px; /* Tinggi sedikit ditambah untuk ruang label */
+                position: relative;
+            }
+            .chart-bar {
+                display: flex;
+                align-items: flex-end;
+                height: 150px;
+                margin-bottom: 25px; /* Ruang lebih untuk label X */
+                border-bottom: 2px solid #e0e0e0;
+                position: relative;
+                gap: 8px;
+                padding: 0 15px;
+                justify-content: space-between; /* Distribusi merata */
+            }
+            .chart-y-axis {
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 25px;
+                border-right: 2px solid #e0e0e0;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                padding: 0 3px 25px 0;
+                font-size: 10px;
+                color: #666;
+                font-weight: 600;
+            }
+            .chart-x-axis {
+                display: flex;
+                justify-content: space-between;
+                padding-top: 8px;
+                margin: 0 15px;
+                position: relative;
+                height: 40px; /* Tinggi cukup untuk label */
+            }
+            .chart-x-label {
+                font-size: 11px;
+                color: #333;
+                text-align: center;
+                width: 60px; /* Lebar cukup untuk nama kecamatan */
+                font-weight: 600;
+                white-space: nowrap;
+                overflow: visible;
+                text-overflow: unset;
+                transform: rotate(-45deg);
+                transform-origin: top left;
+                margin-left: -10px;
+                margin-top: 15px;
+                position: relative;
+                z-index: 1;
+            }
+            .chart-column {
+                flex: 1;
+                max-width: 45px;
+                background: var(--yogya-blue);
+                border-radius: 4px 4px 0 0;
+                position: relative;
+                transition: all 0.3s ease;
+                box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
+                margin: 0 2px;
+                min-width: 35px; /* Lebar minimum untuk kolom */
+                cursor: pointer;
+            }
+            .chart-column:hover {
+                filter: brightness(1.2);
+                transform: translateY(-2px);
+            }
+            .chart-value {
+                position: absolute;
+                top: -22px;
+                left: 0;
+                right: 0;
+                text-align: center;
+                font-size: 10px;
+                color: #333;
+                font-weight: 700;
+                background: rgba(255, 255, 255, 0.9);
+                padding: 1px 3px;
+                border-radius: 3px;
+                border: 1px solid #e0e0e0;
+            }
+
+            /* Tooltip untuk chart */
+            .chart-tooltip {
+                position: absolute;
+                background: rgba(255, 255, 255, 0.95);
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                padding: 12px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                z-index: 1000;
+                font-size: 12px;
+                max-width: 200px;
+                backdrop-filter: blur(5px);
+                pointer-events: none;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            
+            .chart-tooltip.show {
+                opacity: 1;
+            }
+            
+            .chart-tooltip h4 {
+                margin: 0 0 8px 0;
+                color: var(--yogya-blue);
+                font-size: 13px;
+                font-weight: 700;
+            }
+            
+            .chart-tooltip .detail-item {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 4px;
+                padding-bottom: 4px;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            
+            .chart-tooltip .detail-item:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+            }
+            
+            .chart-tooltip .detail-label {
+                color: #666;
+                font-weight: 500;
+            }
+            
+            .chart-tooltip .detail-value {
+                color: #333;
+                font-weight: 600;
+            }
+
+            /* Analysis Section */
+            .analysis-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 0;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            .analysis-item:last-child {
+                border-bottom: none;
+            }
+            .analysis-label {
+                font-size: 14px;
+                color: #333;
+                font-weight: 500;
+            }
+            .analysis-value {
+                font-size: 14px;
+                font-weight: 700;
+                color: var(--yogya-blue);
+            }
+
+            /* Mini Map Container - Integrated with Dashboard Layout */
+            .mini-map-container {
+                background: #ffffff;
+                border: 1px solid #e0e0e0;
+                border-radius: 15px;
+                padding: 20px;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+                transition: all 0.3s ease;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .mini-map-container:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+            }
+            
+            .mini-map-title {
+                font-size: 18px;
+                font-weight: 700;
+                color: var(--yogya-blue);
+                margin: 0 0 15px;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #e0e0e0;
+            }
+            
+            .mini-map-content {
+                flex: 1;
+                background: #f0f0f0;
+                border-radius: 8px;
+                overflow: hidden;
+                border: 2px solid var(--yogya-blue);
+            }
+            
+            #mini-map {
+                width: 100%;
+                height: 100%;
+            }
+            
+            /* Dashboard Sections */
+            .dashboard-section {
+                background: #ffffff;
+                border: 1px solid #e0e0e0;
+                border-radius: 15px;
+                padding: 20px;
+                margin-bottom: 20px;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+                transition: all 0.3s ease;
+            }
+            
+            .dashboard-section:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+            }
+            
+            /* Fullscreen mode */
+            .fullscreen-mode #dashboard-header,
+            .fullscreen-mode #dashboard-content,
+            .fullscreen-mode .mini-map-container {
+                display: none;
+            }
+            
+            .fullscreen-mode #map {
+                z-index: 1;
+            }
+            
+            /* Grid layout for dashboard sections */
+            .dashboard-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+                width: 100%;
+            }
+            
+            .grid-col-2 {
+                grid-column: span 2;
+            }
+            
+            .grid-col-3 {
+                grid-column: span 3;
+            }
+            
+            /* Layer controls in fullscreen mode */
+            .layer-controls-fullscreen {
+                position: absolute;
+                top: 80px;
+                right: 20px;
+                background: rgba(255, 255, 255, 0.95);
+                border: 2px solid #e0e0e0;
+                border-radius: 12px;
+                padding: 20px;
+                z-index: 1000;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+                backdrop-filter: blur(10px);
+                display: none;
+            }
+            
+            .fullscreen-mode .layer-controls-fullscreen {
+                display: block;
+            }
+            
+            .layer-controls-fullscreen .section-title {
+                color: var(--yogya-blue);
+                margin-bottom: 15px;
+                font-size: 18px;
+                border-bottom: 2px solid #e0e0e0;
+                padding-bottom: 10px;
+            }
+
+            /* Back to Dashboard button in fullscreen - Updated Position */
+            .back-to-dashboard {
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                z-index: 1000;
+                display: none;
+            }
+            
+            .fullscreen-mode .back-to-dashboard {
+                display: block;
+            }
+
+            /* Legend in Fullscreen Mode */
+            .legend-fullscreen {
+                position: absolute;
+                bottom: 20px;
+                right: 20px;
+                background: rgba(255, 255, 255, 0.95);
+                border: 2px solid #e0e0e0;
+                border-radius: 12px;
+                padding: 20px;
+                z-index: 1000;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+                backdrop-filter: blur(10px);
+                display: none;
+                width: 280px;
+            }
+            
+            .fullscreen-mode .legend-fullscreen {
+                display: block;
+            }
+            
+            .legend-fullscreen .section-title {
+                color: var(--yogya-blue);
+                margin-bottom: 15px;
+                font-size: 18px;
+                border-bottom: 2px solid #e0e0e0;
+                padding-bottom: 10px;
+            }
+            
+            /* Scrollbar styling */
+            #dashboard-sidebar::-webkit-scrollbar {
+                width: 8px;
+            }
+            
+            #dashboard-sidebar::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 10px;
+            }
+            
+            #dashboard-sidebar::-webkit-scrollbar-thumb {
+                background: #c1c1c1;
+                border-radius: 10px;
+            }
+            
+            #dashboard-sidebar::-webkit-scrollbar-thumb:hover {
+                background: #a8a8a8;
+            }
+
+            /* ======== GUIDE PANEL STYLES ======== */
+            #guide-panel {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                backdrop-filter: blur(5px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 2000;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+            }
+
+            #guide-panel.show {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .guide-container {
+                background: white;
+                border-radius: 15px;
+                width: 90%;
+                max-width: 450px;
+                max-height: 70vh;
+                overflow: hidden;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                transform: translateY(30px);
+                transition: transform 0.3s ease;
+            }
+
+            #guide-panel.show .guide-container {
+                transform: translateY(0);
+            }
+
+            .guide-header {
+                background: var(--yogya-blue);
+                color: white;
+                padding: 15px 20px;
+                text-align: center;
+                position: relative;
+            }
+
+            .guide-title {
+                font-size: 20px;
+                font-weight: 700;
+                margin: 0 0 3px 0;
+            }
+
+            .guide-subtitle {
+                font-size: 12px;
+                opacity: 0.9;
+                margin: 0;
+            }
+
+            .guide-close {
+                position: absolute;
+                top: 12px;
+                right: 15px;
+                background: none;
+                border: none;
+                color: white;
+                font-size: 18px;
+                cursor: pointer;
+                width: 25px;
+                height: 25px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background 0.3s ease;
+                display: none; /* Sembunyikan di slide 1 */
+            }
+
+            .guide-close:hover {
+                background: rgba(255, 255, 255, 0.2);
+            }
+
+            .guide-close.show {
+                display: flex; /* Tampilkan di slide 2 */
+            }
+
+            .guide-content {
+                padding: 20px;
+                text-align: center;
+            }
+
+            .guide-slide {
+                display: none;
+            }
+
+            .guide-slide.active {
+                display: block;
+                animation: fadeIn 0.5s ease;
+            }
+
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+
+            .guide-icon {
+                font-size: 50px;
+                color: var(--yogya-blue);
+                margin-bottom: 15px;
+            }
+
+            .guide-text {
+                font-size: 15px;
+                line-height: 1.5;
+                color: #333;
+                margin-bottom: 15px;
+            }
+
+            .guide-highlight {
+                background: rgba(26, 35, 126, 0.1);
+                padding: 8px 12px;
+                border-radius: 6px;
+                border-left: 3px solid var(--yogya-blue);
+                margin: 12px 0;
+                text-align: left;
+                font-size: 14px;
+            }
+
+            .guide-navigation {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 20px;
+                position: relative;
+            }
+
+            .guide-dots {
+                display: flex;
+                gap: 6px;
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+                bottom: -35px;
+            }
+
+            .guide-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: #e0e0e0;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .guide-dot.active {
+                background: var(--yogya-blue);
+                transform: scale(1.2);
+            }
+
+            .guide-btn {
+                background: var(--yogya-blue);
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 600;
+                font-size: 13px;
+                transition: all 0.3s ease;
+            }
+
+            .guide-btn:hover {
+                background: #151f7a;
+                transform: translateY(-2px);
+            }
+
+            .guide-btn.outline {
+                background: transparent;
+                color: var(--yogya-blue);
+                border: 2px solid var(--yogya-blue);
+            }
+
+            .guide-btn.outline:hover {
+                background: rgba(26, 35, 126, 0.1);
+            }
+        </style>
+        
+        <title>Dashboard Fasilitas Kesehatan Kota Yogyakarta</title>
+    </head>
+    <body>
+        <!-- Map Container -->
+        <div id="map">
+            <div id="popup" class="ol-popup">
+                <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+                <div id="popup-content"></div>
+            </div>
+        </div>
+
+        <!-- ======== DASHBOARD FULL SCREEN ======== -->
+        
+        <!-- Header Dashboard -->
+        <div id="dashboard-header">
+            <div class="header-left">
+                <h1 class="dashboard-title">Dashboard Fasilitas Kesehatan</h1>
+                <p class="dashboard-subtitle">Kota Yogyakarta</p>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-outline" id="home-view">
+                    <i class="fas fa-home"></i> Home
+                </button>
+                <button class="btn btn-primary" id="full-map">
+                    <i class="fas fa-expand"></i> Lihat Peta Lengkap
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Content -->
+        <div id="dashboard-content">
+            <!-- Full Dashboard Content -->
+            <div id="dashboard-sidebar">
+                <!-- Ringkasan Statistik -->
+                <div class="dashboard-section grid-col-3">
+                    <div class="section-header">
+                        <h3 class="section-title">Ringkasan</h3>
+                    </div>
+                    
+                    <div class="cards">
+                        <div class="card"><div class="num">12</div><div class="lbl">Rumah Sakit</div></div>
+                        <div class="card"><div class="num">9</div><div class="lbl">Klinik</div></div>
+                        <div class="card"><div class="num">7</div><div class="lbl">Puskesmas</div></div>
+                    </div>
+                    <div class="cards wide">
+                        <div class="card"><div class="num">28</div><div class="lbl">Total Faskes</div></div>
+                        <div class="card"><div class="num">1.842</div><div class="lbl">Segmen Jalan</div></div>
+                    </div>
+                </div>
+
+                <!-- Persentase Fasilitas Kesehatan -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Distribusi Fasilitas Kesehatan</h3>
+                    </div>
+                    
+                    <div class="bars">
+                        <div class="bar" style="--pct: calc(var(--rs-pct) * 1%); --clr:var(--hospital)">
+                            <div class="tag">RS</div>
+                            <div class="track"><span class="fill"></span></div>
+                            <div class="val"><span>40%</span></div>
+                        </div>
+                        <div class="bar" style="--pct: calc(var(--kl-pct) * 1%); --clr:var(--clinic)">
+                            <div class="tag">Klinik</div>
+                            <div class="track"><span class="fill"></span></div>
+                            <div class="val"><span>35%</span></div>
+                        </div>
+                        <div class="bar" style="--pct: calc(var(--pk-pct) * 1%); --clr:var(--health-center)">
+                            <div class="tag">Puskes</div>
+                            <div class="track"><span class="fill"></span></div>
+                            <div class="val"><span>25%</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Diagram Jumlah Fasilitas Kesehatan per Kecamatan - IMPROVED -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Faskes per Kecamatan</h3>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-title">Jumlah Fasilitas Kesehatan per Kecamatan</div>
+                        <div class="chart">
+                            <div class="chart-bar">
+                                <div class="chart-y-axis">
+                                    <span>15</span>
+                                    <span>12</span>
+                                    <span>9</span>
+                                    <span>6</span>
+                                    <span>3</span>
+                                    <span>0</span>
+                                </div>
+                                <div class="chart-column" style="height: 75%; background: var(--hospital);" data-kecamatan="Gondomanan" data-rs="5" data-klinik="6" data-puskes="4">
+                                    <div class="chart-value">15</div>
+                                </div>
+                                <div class="chart-column" style="height: 60%; background: var(--clinic);" data-kecamatan="Danurejan" data-rs="3" data-klinik="5" data-puskes="4">
+                                    <div class="chart-value">12</div>
+                                </div>
+                                <div class="chart-column" style="height: 45%; background: var(--health-center);" data-kecamatan="Wirobrajan" data-rs="2" data-klinik="4" data-puskes="3">
+                                    <div class="chart-value">9</div>
+                                </div>
+                                <div class="chart-column" style="height: 30%; background: var(--yogya-blue);" data-kecamatan="Mantrijeron" data-rs="1" data-klinik="3" data-puskes="2">
+                                    <div class="chart-value">6</div>
+                                </div>
+                                <div class="chart-column" style="height: 65%; background: var(--clinic);" data-kecamatan="Gondokusuman" data-rs="4" data-klinik="5" data-puskes="4">
+                                    <div class="chart-value">13</div>
+                                </div>
+                                <div class="chart-column" style="height: 40%; background: var(--health-center);" data-kecamatan="Umbulharjo" data-rs="2" data-klinik="3" data-puskes="3">
+                                    <div class="chart-value">8</div>
+                                </div>
+                                <div class="chart-column" style="height: 55%; background: var(--yogya-blue);" data-kecamatan="Kotagede" data-rs="3" data-klinik="4" data-puskes="4">
+                                    <div class="chart-value">11</div>
+                                </div>
+                            </div>
+                            <div class="chart-x-axis">
+                                <div class="chart-x-label">Gondomanan</div>
+                                <div class="chart-x-label">Danurejan</div>
+                                <div class="chart-x-label">Wirobrajan</div>
+                                <div class="chart-x-label">Mantrijeron</div>
+                                <div class="chart-x-label">Gondokusuman</div>
+                                <div class="chart-x-label">Umbulharjo</div>
+                                <div class="chart-x-label">Kotagede</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analisis Jangkauan Layanan -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Analisis Jangkauan Layanan</h3>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-title">Persebaran Jangkauan Layanan Faskes</div>
+                        <div class="analysis-item">
+                            <span class="analysis-label">Penduduk dalam jangkauan 1 km</span>
+                            <span class="analysis-value">78%</span>
+                        </div>
+                        <div class="analysis-item">
+                            <span class="analysis-label">Penduduk dalam jangkauan 2 km</span>
+                            <span class="analysis-value">92%</span>
+                        </div>
+                        <div class="analysis-item">
+                            <span class="analysis-label">Area tanpa akses Faskes</span>
+                            <span class="analysis-value">8%</span>
+                        </div>
+                        <div class="analysis-item">
+                            <span class="analysis-label">Kepadatan Faskes per km²</span>
+                            <span class="analysis-value">2.4</span>
+                        </div>
+                        <div class="analysis-item">
+                            <span class="analysis-label">Rata-rata jarak ke Faskes terdekat</span>
+                            <span class="analysis-value">0.8 km</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Layer Control -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Layer Peta</h3>
+                    </div>
+                    
+                    <div class="layer-list">
+                        <label class="layer-item">
+                            <input class="chk" type="checkbox" checked data-layer="rs">
+                            <span class="layer-name">Rumah Sakit</span>
+                        </label>
+                        <label class="layer-item">
+                            <input class="chk" type="checkbox" checked data-layer="klinik">
+                            <span class="layer-name">Klinik</span>
+                        </label>
+                        <label class="layer-item">
+                            <input class="chk" type="checkbox" checked data-layer="puskes">
+                            <span class="layer-name">Puskesmas</span>
+                        </label>
+                        <label class="layer-item">
+                            <input class="chk" type="checkbox" checked data-layer="merge">
+                            <span class="layer-name">Faskes (Merge)</span>
+                        </label>
+                        <label class="layer-item">
+                            <input class="chk" type="checkbox" checked data-layer="jangkauan">
+                            <span class="layer-name">Jangkauan Layanan</span>
+                        </label>
+                        <label class="layer-item">
+                            <input class="chk" type="checkbox" checked data-layer="jalan">
+                            <span class="layer-name">Jalan</span>
+                        </label>
+                        <label class="layer-item">
+                            <input class="chk" type="checkbox" checked data-layer="batas">
+                            <span class="layer-name">Batas Kecamatan</span>
+                        </label>
+                        <label class="layer-item">
+                            <input class="chk" type="checkbox" checked data-layer="osm">
+                            <span class="layer-name">Open Street Map</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Legenda - Terpisah -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Legenda</h3>
+                    </div>
+                    
+                    <div class="legend">
+                        <div class="item"><span class="swatch" style="background:var(--hospital)"></span><span>Rumah Sakit</span></div>
+                        <div class="item"><span class="swatch" style="background:var(--clinic)"></span><span>Klinik</span></div>
+                        <div class="item"><span class="swatch" style="background:var(--health-center)"></span><span>Puskesmas</span></div>
+                        <div class="item"><span class="swatch" style="background:rgba(255,193,7,0.4)"></span><span>Jangkauan Layanan</span></div>
+                        <div class="item"><span class="swatch" style="background:#616161"></span><span>Jalan</span></div>
+                        <div class="item"><span class="swatch" style="background:#8d6e63"></span><span>Batas Kecamatan</span></div>
+                    </div>
+                </div>
+
+                <!-- Peta Mini - Terpisah -->
+                <div class="mini-map-container">
+                    <h3 class="mini-map-title">Peta Mini</h3>
+                    <div class="mini-map-content">
+                        <div id="mini-map"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Layer Controls in Fullscreen Mode -->
+        <div class="layer-controls-fullscreen">
+            <h3 class="section-title">Layer Peta</h3>
+            <div class="layer-list">
+                <label class="layer-item">
+                    <input class="chk" type="checkbox" checked data-layer="rs">
+                    <span class="layer-name">Rumah Sakit</span>
+                </label>
+                <label class="layer-item">
+                    <input class="chk" type="checkbox" checked data-layer="klinik">
+                    <span class="layer-name">Klinik</span>
+                </label>
+                <label class="layer-item">
+                    <input class="chk" type="checkbox" checked data-layer="puskes">
+                    <span class="layer-name">Puskesmas</span>
+                </label>
+                <label class="layer-item">
+                    <input class="chk" type="checkbox" checked data-layer="merge">
+                    <span class="layer-name">Faskes (Merge)</span>
+                </label>
+                <label class="layer-item">
+                    <input class="chk" type="checkbox" checked data-layer="jangkauan">
+                    <span class="layer-name">Jangkauan Layanan</span>
+                </label>
+                <label class="layer-item">
+                    <input class="chk" type="checkbox" checked data-layer="jalan">
+                    <span class="layer-name">Jalan</span>
+                </label>
+                <label class="layer-item">
+                    <input class="chk" type="checkbox" checked data-layer="batas">
+                    <span class="layer-name">Batas Kecamatan</span>
+                </label>
+                <label class="layer-item">
+                    <input class="chk" type="checkbox" checked data-layer="osm">
+                    <span class="layer-name">Open Street Map</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Legend in Fullscreen Mode -->
+        <div class="legend-fullscreen">
+            <h3 class="section-title">Legenda</h3>
+            <div class="legend">
+                <div class="item"><span class="swatch" style="background:var(--hospital)"></span><span>Rumah Sakit</span></div>
+                <div class="item"><span class="swatch" style="background:var(--clinic)"></span><span>Klinik</span></div>
+                <div class="item"><span class="swatch" style="background:var(--health-center)"></span><span>Puskesmas</span></div>
+                <div class="item"><span class="swatch" style="background:rgba(255,193,7,0.4)"></span><span>Jangkauan Layanan</span></div>
+                <div class="item"><span class="swatch" style="background:#616161"></span><span>Jalan</span></div>
+                <div class="item"><span class="swatch" style="background:#8d6e63"></span><span>Batas Kecamatan</span></div>
+            </div>
+        </div>
+
+        <!-- Back to Dashboard Button in Fullscreen - Updated Position -->
+        <div class="back-to-dashboard">
+            <button class="btn btn-primary" id="back-to-dashboard">
+                <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+            </button>
+        </div>
+
+        <!-- Tooltip untuk Chart -->
+        <div id="chart-tooltip" class="chart-tooltip"></div>
+
+        <!-- ======== GUIDE PANEL ======== -->
+        <div id="guide-panel">
+            <div class="guide-container">
+                <div class="guide-header">
+                    <h2 class="guide-title">Panduan Pengguna</h2>
+                    <p class="guide-subtitle">Tips cepat untuk menggunakan dashboard</p>
+                    <button class="guide-close" id="guide-close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="guide-content">
+                    <!-- Slide 1: Layer Peta -->
+                    <div class="guide-slide active" id="slide-1">
+                        <div class="guide-icon">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                        <h3>Penggunaan Layer Peta</h3>
+                        <p class="guide-text">
+                            Untuk menampilkan layer Rumah Sakit, Klinik, atau Puskesmas secara terpisah:
+                        </p>
+                        <div class="guide-highlight">
+                            <strong>Penting:</strong> Nonaktifkan terlebih dahulu layer "Faskes (Merge)" agar tampilan tidak bertumpuk dan lebih jelas.
+                        </div>
+                    </div>
+                    
+                    <!-- Slide 2: Troubleshooting Peta -->
+                    <div class="guide-slide" id="slide-2">
+                        <div class="guide-icon">
+                            <i class="fas fa-map-marked-alt"></i>
+                        </div>
+                        <h3>Pemecahan Masalah Peta</h3>
+                        <p class="guide-text">
+                            Jika peta tidak muncul saat membuka tampilan penuh atau di dashboard:
+                        </p>
+                        <div class="guide-highlight">
+                            <strong>Solusi:</strong> Klik, tahan, dan geser layar peta untuk memuat ulang tampilan. 
+                            Ini akan memicu rendering ulang peta.
+                        </div>
+                    </div>
+                    
+                    <div class="guide-navigation">
+                        <button class="guide-btn outline" id="guide-prev">
+                            <i class="fas fa-chevron-left"></i> Sebelumnya
+                        </button>
+                        
+                        <div class="guide-dots">
+                            <div class="guide-dot active" data-slide="1"></div>
+                            <div class="guide-dot" data-slide="2"></div>
+                        </div>
+                        
+                        <button class="guide-btn" id="guide-next">
+                            Lanjut
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gunakan CDN untuk library utama -->
+        <script src="https://cdn.jsdelivr.net/npm/ol@7.3.0/dist/ol.js"></script>
+        <script src="./resources/ol-layerswitcher.js"></script>
+        
+        <!-- Script untuk resources lokal dengan fallback -->
+        <script>
+            // Fungsi untuk memuat script dengan fallback
+            function loadScript(src, fallbackSrc, callback) {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = callback;
+                script.onerror = function() {
+                    console.warn(`Failed to load ${src}, trying fallback: ${fallbackSrc}`);
+                    const fallbackScript = document.createElement('script');
+                    fallbackScript.src = fallbackSrc;
+                    fallbackScript.onload = callback;
+                    document.head.appendChild(fallbackScript);
+                };
+                document.head.appendChild(script);
+            }
+
+            // Fungsi untuk memuat resources
+            function loadResources() {
+                // Load resources utama
+                loadScript('./resources/qgis2web_expressions.js', '', function() {
+                    loadScript('./resources/functions.js', '', function() {
+                        // Load layer files
+                        const layerFiles = [
+                            'layers/JangkauanFasilitasKesehatan_1.js',
+                            'layers/jalan_kota_yogyakarta_2.js',
+                            'layers/sebaran_rumah_sakit_di_kota_yogyakarta_3.js',
+                            'layers/sebaran_klinik_di_kota_yogyakarta_4.js',
+                            'layers/sebaran_puskesmas_di_kota_yogyakarta_5.js',
+                            'layers/Fasilitas_Kesehatan_Merge_UTM_6.js',
+                            'layers/ar_batas_administrasi_kecamatan_kota_yogyakarta_7.js'
+                        ];
+                        
+                        // Load style files
+                        const styleFiles = [
+                            'styles/JangkauanFasilitasKesehatan_1_style.js',
+                            'styles/jalan_kota_yogyakarta_2_style.js',
+                            'styles/sebaran_rumah_sakit_di_kota_yogyakarta_3_style.js',
+                            'styles/sebaran_klinik_di_kota_yogyakarta_4_style.js',
+                            'styles/sebaran_puskesmas_di_kota_yogyakarta_5_style.js',
+                            'styles/Fasilitas_Kesehatan_Merge_UTM_6_style.js',
+                            'styles/ar_batas_administrasi_kecamatan_kota_yogyakarta_7_style.js'
+                        ];
+                        
+                        // Load layer files
+                        function loadLayers(index) {
+                            if (index < layerFiles.length) {
+                                loadScript(layerFiles[index], '', function() {
+                                    loadLayers(index + 1);
+                                });
+                            } else {
+                                // Load style files setelah layer files selesai
+                                loadStyles(0);
+                            }
+                        }
+                        
+                        // Load style files
+                        function loadStyles(index) {
+                            if (index < styleFiles.length) {
+                                loadScript(styleFiles[index], '', function() {
+                                    loadStyles(index + 1);
+                                });
+                            } else {
+                                // Load file terakhir
+                                loadScript('./layers/layers.js', '', function() {
+                                    loadScript('./resources/Autolinker.min.js', '', function() {
+                                        loadScript('./resources/qgis2web.js', '', function() {
+                                            console.log('All resources loaded successfully');
+                                            // Inisialisasi dashboard setelah semua resources dimuat
+                                            setTimeout(initDashboard, 500);
+                                        });
+                                    });
+                                });
+                            }
+                        }
+                        
+                        // Mulai memuat layer files
+                        loadLayers(0);
+                    });
+                });
+            }
+
+            // Mulai memuat resources
+            document.addEventListener('DOMContentLoaded', loadResources);
+        </script>
+
+        <!-- Script untuk Dashboard -->
+        <script>
+            // Variabel global untuk mini map
+            let miniMap = null;
+
+            function initDashboard() {
+                console.log('Initializing dashboard...');
+                
+                // Inisialisasi Guide Panel
+                function initGuidePanel() {
+                    const guidePanel = document.getElementById('guide-panel');
+                    const guideClose = document.getElementById('guide-close');
+                    const guideNext = document.getElementById('guide-next');
+                    const guidePrev = document.getElementById('guide-prev');
+                    const guideDots = document.querySelectorAll('.guide-dot');
+                    const slides = document.querySelectorAll('.guide-slide');
+                    
+                    let currentSlide = 1;
+                    const totalSlides = 2;
+                    
+                    // TAMPILKAN GUIDE PANEL SETIAP KALI WEB DIBUKA
+                    setTimeout(() => {
+                        guidePanel.classList.add('show');
+                    }, 1000);
+                    
+                    // Fungsi untuk mengubah slide
+                    function goToSlide(slideNumber) {
+                        // Sembunyikan semua slide
+                        slides.forEach(slide => {
+                            slide.classList.remove('active');
+                        });
+                        
+                        // Tampilkan slide yang dipilih
+                        document.getElementById(`slide-${slideNumber}`).classList.add('active');
+                        
+                        // Update dots
+                        guideDots.forEach(dot => {
+                            dot.classList.remove('active');
+                            if (parseInt(dot.getAttribute('data-slide')) === slideNumber) {
+                                dot.classList.add('active');
+                            }
+                        });
+                        
+                        // Update tombol navigasi
+                        guidePrev.style.visibility = slideNumber === 1 ? 'hidden' : 'visible';
+                        
+                        // Update tombol next - ganti teks menjadi "Lanjut" di slide 1
+                        if (slideNumber === 1) {
+                            guideNext.textContent = 'Lanjut';
+                        } else {
+                            guideNext.textContent = 'Selesai';
+                        }
+                        
+                        // Tampilkan/sembunyikan tombol close
+                        if (slideNumber === 2) {
+                            guideClose.classList.add('show');
+                        } else {
+                            guideClose.classList.remove('show');
+                        }
+                        
+                        currentSlide = slideNumber;
+                    }
+                    
+                    // Event listeners
+                    guideClose.addEventListener('click', function() {
+                        // Hanya bisa ditutup di slide 2
+                        if (currentSlide === 2) {
+                            guidePanel.classList.remove('show');
+                        }
+                    });
+                    
+                    guideNext.addEventListener('click', function() {
+                        if (currentSlide < totalSlides) {
+                            goToSlide(currentSlide + 1);
+                        } else {
+                            guidePanel.classList.remove('show');
+                        }
+                    });
+                    
+                    guidePrev.addEventListener('click', function() {
+                        if (currentSlide > 1) {
+                            goToSlide(currentSlide - 1);
+                        }
+                    });
+                    
+                    guideDots.forEach(dot => {
+                        dot.addEventListener('click', function() {
+                            const slideNumber = parseInt(this.getAttribute('data-slide'));
+                            goToSlide(slideNumber);
+                        });
+                    });
+                    
+                    // Inisialisasi slide pertama
+                    goToSlide(1);
+                }
+                
+                // Inisialisasi mini map
+                function initMiniMap() {
+                    const miniMapContainer = document.getElementById('mini-map');
+                    if (miniMapContainer && window.map) {
+                        console.log('Initializing mini map...');
+                        
+                        // Hapus konten sebelumnya
+                        miniMapContainer.innerHTML = '';
+                        
+                        // Buat elemen baru untuk mini map
+                        const miniMapElement = document.createElement('div');
+                        miniMapElement.id = 'mini-map-inner';
+                        miniMapElement.style.width = '100%';
+                        miniMapElement.style.height = '100%';
+                        miniMapContainer.appendChild(miniMapElement);
+                        
+                        // Buat peta baru untuk mini map dengan layer yang sama
+                        try {
+                            miniMap = new ol.Map({
+                                target: 'mini-map-inner',
+                                layers: window.map.getLayers(),
+                                view: new ol.View({
+                                    center: window.map.getView().getCenter(),
+                                    zoom: window.map.getView().getZoom() - 2, // Zoom out sedikit
+                                    maxZoom: 18,
+                                    minZoom: 10
+                                }),
+                                controls: []
+                            });
+                            
+                            // Sinkronkan view dengan peta utama
+                            window.map.getView().on('change:center', function() {
+                                miniMap.getView().setCenter(window.map.getView().getCenter());
+                            });
+                            
+                            window.map.getView().on('change:resolution', function() {
+                                miniMap.getView().setResolution(window.map.getView().getResolution());
+                            });
+                            
+                            console.log('Mini map initialized successfully');
+                            
+                        } catch (error) {
+                            console.error('Error initializing mini map:', error);
+                            // Fallback: tampilkan placeholder
+                            miniMapElement.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#666;font-size:14px;">Peta Mini</div>';
+                        }
+                    }
+                }
+                
+                // Tunggu sebentar sebelum inisialisasi mini map
+                setTimeout(initMiniMap, 500);
+                
+                // Fungsi untuk reset view ke home
+                document.getElementById('home-view').addEventListener('click', function() {
+                    if (window.map) {
+                        // Dapatkan view dari peta
+                        const view = window.map.getView();
+                        // Reset ke extent awal atau zoom default
+                        const extent = window.map.getView().calculateExtent(window.map.getSize());
+                        view.fit(extent, { duration: 1000 });
+                    }
+                });
+
+                // Fungsi untuk toggle full map view
+                document.getElementById('full-map').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Full map button clicked');
+                    
+                    document.body.classList.toggle('fullscreen-mode');
+                    
+                    if (document.body.classList.contains('fullscreen-mode')) {
+                        this.innerHTML = '<i class="fas fa-compress"></i> Kembali ke Dashboard';
+                        console.log('Switched to fullscreen mode');
+                    } else {
+                        this.innerHTML = '<i class="fas fa-expand"></i> Lihat Peta Lengkap';
+                        console.log('Switched to dashboard mode');
+                    }
+                    
+                    // Update ukuran peta
+                    setTimeout(() => {
+                        if (window.map) {
+                            window.map.updateSize();
+                            console.log('Map size updated');
+                        }
+                        if (miniMap) {
+                            miniMap.updateSize();
+                            console.log('Mini map size updated');
+                        }
+                    }, 300);
+                });
+
+                // Fungsi untuk kembali ke dashboard dari fullscreen
+                document.getElementById('back-to-dashboard').addEventListener('click', function() {
+                    console.log('Back to dashboard clicked');
+                    document.body.classList.remove('fullscreen-mode');
+                    document.getElementById('full-map').innerHTML = '<i class="fas fa-expand"></i> Lihat Peta Lengkap';
+                    
+                    // Update ukuran peta
+                    setTimeout(() => {
+                        if (window.map) {
+                            window.map.updateSize();
+                        }
+                        if (miniMap) {
+                            miniMap.updateSize();
+                        }
+                    }, 300);
+                });
+
+                // Script untuk interaktivitas chart
+                function initChartInteractivity() {
+                    const chartColumns = document.querySelectorAll('.chart-column');
+                    const tooltip = document.getElementById('chart-tooltip');
+                    
+                    chartColumns.forEach(column => {
+                        column.addEventListener('mouseenter', function(e) {
+                            const kecamatan = this.getAttribute('data-kecamatan');
+                            const rs = this.getAttribute('data-rs');
+                            const klinik = this.getAttribute('data-klinik');
+                            const puskes = this.getAttribute('data-puskes');
+                            const total = parseInt(rs) + parseInt(klinik) + parseInt(puskes);
+                            
+                            // Update tooltip content
+                            tooltip.innerHTML = `
+                                <h4>${kecamatan}</h4>
+                                <div class="detail-item">
+                                    <span class="detail-label">Total Faskes:</span>
+                                    <span class="detail-value">${total}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Rumah Sakit:</span>
+                                    <span class="detail-value" style="color: var(--hospital)">${rs}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Klinik:</span>
+                                    <span class="detail-value" style="color: var(--clinic)">${klinik}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Puskesmas:</span>
+                                    <span class="detail-value" style="color: var(--health-center)">${puskes}</span>
+                                </div>
+                            `;
+                            
+                            // Position tooltip
+                            const rect = this.getBoundingClientRect();
+                            tooltip.style.left = (rect.left + rect.width / 2 - 100) + 'px';
+                            tooltip.style.top = (rect.top - 120) + 'px';
+                            
+                            // Show tooltip
+                            tooltip.classList.add('show');
+                            
+                            // Highlight the column
+                            this.style.filter = 'brightness(1.3)';
+                            this.style.transform = 'translateY(-5px)';
+                        });
+                        
+                        column.addEventListener('mouseleave', function() {
+                            // Hide tooltip
+                            tooltip.classList.remove('show');
+                            
+                            // Remove highlight
+                            this.style.filter = '';
+                            this.style.transform = '';
+                        });
+                        
+                        column.addEventListener('mousemove', function(e) {
+                            // Update tooltip position while moving
+                            const rect = this.getBoundingClientRect();
+                            tooltip.style.left = (rect.left + rect.width / 2 - 100) + 'px';
+                            tooltip.style.top = (rect.top - 120) + 'px';
+                        });
+                    });
+                }
+
+                // Script untuk kontrol layer
+                (function(){
+                    console.log('Initializing layer controls...');
+                    
+                    // Pemetaan variabel layer dari qgis2web
+                    const LAYERS = {
+                        rs:        window.lyr_sebaran_rumah_sakit_di_kota_yogyakarta_3,
+                        klinik:    window.lyr_sebaran_klinik_di_kota_yogyakarta_4,
+                        puskes:    window.lyr_sebaran_puskesmas_di_kota_yogyakarta_5,
+                        merge:     window.lyr_Fasilitas_Kesehatan_Merge_UTM_6,
+                        jangkauan: window.lyr_JangkauanFasilitasKesehatan_1,
+                        jalan:     window.lyr_jalan_kota_yogyakarta_2,
+                        batas:     window.lyr_ar_batas_administrasi_kecamatan_kota_yogyakarta_7,
+                        osm:       null
+                    };
+
+                    console.log('Available layers:', LAYERS);
+
+                    // Flatten util untuk layer & group
+                    function flatten(col){
+                        const out = [];
+                        if (!col) return out;
+                        const each = (fn)=> Array.isArray(col) ? col.forEach(fn) : (typeof col.forEach==='function' ? col.forEach(fn) : null);
+                        each(l=>{
+                            if (typeof ol !== 'undefined' && l instanceof ol.layer.Group) {
+                                try { out.push(...flatten(l.getLayers())); } catch(e){}
+                            } else {
+                                out.push(l);
+                            }
+                        });
+                        return out;
+                    }
+
+                    // Cari OSM
+                    function getOSMLayer(){
+                        const direct = [
+                            window.lyr_OpenStreetMap_0,
+                            window.lyr_OSMStandard_0,
+                            window.lyr_OpenStreetMap
+                        ].find(Boolean);
+                        if (direct) return direct;
+
+                        if (window.map && typeof ol !== 'undefined') {
+                            try {
+                                const all = flatten(window.map.getLayers());
+                                const match = all.find(l=>{
+                                    const t = (l && l.get && l.get('title')) ? String(l.get('title')).toLowerCase() : '';
+                                    return t.includes('openstreetmap') || t === 'osm' || /(^|\b)osm(\b|$)/.test(t);
+                                });
+                                if (match) return match;
+                            } catch(e){}
+                        }
+                        return null;
+                    }
+
+                    // Isi layer OSM
+                    LAYERS.osm = getOSMLayer();
+                    console.log('OSM layer:', LAYERS.osm);
+
+                    // Kaitkan semua checkbox (baik di dashboard maupun fullscreen)
+                    document.querySelectorAll('.chk[data-layer]').forEach(cb => {
+                        const key = cb.dataset.layer;
+                        console.log('Setting up checkbox for layer:', key);
+
+                        if (key === 'osm' && !LAYERS.osm) {
+                            setTimeout(()=>{
+                                LAYERS.osm = getOSMLayer();
+                                const osm = LAYERS.osm;
+                                if (osm && typeof osm.setVisible === 'function') {
+                                    try { 
+                                        osm.setVisible(cb.checked); 
+                                        console.log('OSM layer visibility set to:', cb.checked);
+                                    } catch(e){
+                                        console.error('Error setting OSM visibility:', e);
+                                    }
+                                    cb.addEventListener('change', () => { 
+                                        try { 
+                                            osm.setVisible(cb.checked); 
+                                            console.log('OSM layer visibility changed to:', cb.checked);
+                                        } catch(e){
+                                            console.error('Error changing OSM visibility:', e);
+                                        }
+                                    });
+                                } else {
+                                    cb.disabled = true;
+                                    cb.parentElement.title = 'Layer "Open Street Map" tidak ditemukan.';
+                                    console.warn('OSM layer not found');
+                                }
+                            }, 100);
+                            return;
+                        }
+
+                        const layer = LAYERS[key];
+                        if (layer && typeof layer.setVisible === 'function') {
+                            try { 
+                                layer.setVisible(cb.checked); 
+                                console.log('Layer', key, 'visibility set to:', cb.checked);
+                            } catch(e){
+                                console.error('Error setting layer visibility:', e);
+                            }
+                            cb.addEventListener('change', () => { 
+                                try { 
+                                    layer.setVisible(cb.checked); 
+                                    console.log('Layer', key, 'visibility changed to:', cb.checked);
+                                } catch(e){
+                                    console.error('Error changing layer visibility:', e);
+                                }
+                            });
+                        } else if (key !== 'osm') {
+                            cb.disabled = true;
+                            cb.parentElement.title = 'Layer "'+key+'" tidak ditemukan.';
+                            console.warn('Layer not found:', key);
+                        }
+                    });
+                })();
+                
+                // Inisialisasi guide panel
+                initGuidePanel();
+                
+                // Inisialisasi interaktivitas chart
+                initChartInteractivity();
+                
+                // Update ukuran peta untuk menyesuaikan dengan dashboard
+                if (window.map) {
+                    setTimeout(() => {
+                        window.map.updateSize();
+                        console.log('Initial map size update completed');
+                    }, 100);
+                }
+            }
+        </script>
+    </body>
+</html>
